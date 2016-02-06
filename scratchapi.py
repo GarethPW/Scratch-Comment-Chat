@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 
-#!python3
+#!python2
 # ScratchAPI 1.0
 # Written by Dylan5797 [https://dylan5797.github.io]
 #  _____        _             _____ ______ ___ ______  
