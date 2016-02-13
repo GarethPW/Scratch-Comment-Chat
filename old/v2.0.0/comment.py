@@ -1,5 +1,5 @@
 '''
-    Scratch Comment Viewer Server v2.0.1
+    Scratch Comment Viewer Server v2.0.0
 
     Created by Scratch user, Gaza101.
     Licensed under GNU General Public License v3.
@@ -72,23 +72,19 @@ while True:
                 enc = ''.join(  [str(ord(c) if ord(c) < 256 else 32).zfill(3) for c in lc['user']]
                                +["000"]
                                +[str(ord(c) if ord(c) < 256 else 32).zfill(3) for c in lc['msg']]  )
-                info("New comment! Author: "+lc['user'],v=True)
-                try:
-                    info(lc['msg'],v=True)
-                except UnicodeEncodeError:
-                    info("Unable to display comment.",1)
-                info("Encoded: "+(enc[:30]+"..." if len(enc) > 30 else enc),v=True)
                 try:
                     scratch.cloud.set_var("latest_comment",enc,96895524)
-                except Exception:
+                    info("New comment! Author: "+lc['user'],v=True)
+                    info(lc['msg'],v=True)
+                    info("Encoded: "+(enc[:30]+"..." if len(enc) > 30 else enc),v=True)
+                except:
                     info("Failed to send encoded data!",1)
-                    
-        except urllib2.HTTPError as e:
-            info("HTTP Error "+str(e.code)+" when obtaining comments.",1)
-            info("Reason: "+str(e.reason),1,v=True)
         except urllib2.URLError as e:
             info("URL Error when obtaining comments.",1)
-            info("Reason: "+str(e.reason),1,v=True)
+            info("Reason: "+e.reason,1,v=True)
+        except urllib2.HTTPError as e:
+            info("HTTP Error "+str(e.code)+" when obtaining comments.",1)
+            info("Reason: "+e.reason,1,v=True)
         time.sleep(1)
     info("Session invalidated. Did Scratch go down?",1)
     while not scratch.tools.verify_session():
