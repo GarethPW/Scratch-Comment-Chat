@@ -1,3 +1,11 @@
+'''
+    Scratch Comment Viewer Server v1.0.0
+
+    Created by Scratch user, Gaza101.
+    Licensed under GNU General Public License v3.
+    www.garethpw.net
+'''
+
 import scratchapi
 from time import sleep
 from sys import exit as sysexit
@@ -43,8 +51,8 @@ while True:
             enc = ''.join([str(ord(c)).zfill(3) for c in lc[0]]
                          +["128"]
                          +[str(ord(c)).zfill(3) for c in lc[1]])
-            print scratch.cloud.set_var("latest_comment",enc,96895524)
-            print '\n'+lc[0]+'\n'+lc[1]+'\n\n'+(enc[:30]+"..." if len(enc) > 30 else enc)+'\n'
+            scratch.cloud.set_var("latest_comment",enc,96895524)
+            #print '\n'+lc[0]+'\n'+lc[1]+'\n\n'+(enc[:30]+"..." if len(enc) > 30 else enc)+'\n'
     except:
         pass
     sleep(1)
