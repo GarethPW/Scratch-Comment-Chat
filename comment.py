@@ -1,20 +1,27 @@
 '''
-    Scratch Comment Viewer Server v2.0.1
+    Scratch Comment Viewer Server v2.1.0
 
     Created by Scratch user, Gaza101.
     Licensed under GNU General Public License v3.
     www.garethpw.net
 '''
 
-import scratchapi,scratchcomments,time,getpass,codecs,urllib2
+from sys import exit as sysexit
+if __name__ != "__main__": sysexit()
+
+# === Initialisation ===
+
+import config,scratchapi,scratchcomments
+import getpass,time,urllib2
 from os import system
+from io import open
 
 def info(s,c=0,l=True,v=False):
-    m = '['+["INFO","WARNING"][c]+"] "+s
+    m = '['+["INFO","WARNING","ERROR"][c]+"] "+s
     if (not v) or (v and verbose):
         print m
-    if logging and l:
-        log.write(time.strftime("[%H:%M:%S] ",time.gmtime())+m+'\n')
+    if l and logging:
+        log.write(unicode(time.strftime("[%H:%M:%S] ",time.gmtime()))+unicode(m)+u'\n')
 
 def csreplace(s,o,n=''):
     for i in o: #For every find character,
@@ -26,47 +33,173 @@ new_lc = tuple()
 lc = tuple()
 enc = str()
 
-verbose = True
-logging = True
+# === Configuration ===
 
-login = (raw_input("Username: "),getpass.getpass("Password: "))
-system("cls")
-scratch = scratchapi.ScratchUserSession(login[0],login[1])
-while not scratch.tools.verify_session():
-    info("Login failed! Please try again.",l=False)
-    login = (raw_input("Username: "),getpass.getpass("Password: "))
-    system("cls")
-    scratch = scratchapi.ScratchUserSession(login[0],login[1])
-info("Login successful!",l=False)
+default_config = ( {"login_prompt"  : "true" },
+                   {"username"      : ''     },
+                   {"password"      : ''     },
+                   {"project"       : 0      },
+                   {"delay"         : 1      },
+                   {"visual"        : "false"},
+                   {"logging"       : "true" },
+                   {"verbose"       : "true" },
+                   {"config_version": 1      }  )
+default_config_u = (
+u'''# Prompt for login? Set to false to automagically login with preset username and
+# password.
+login_prompt: true
+
+# Details used to log into Scratch if login_prompt has been set to false.
+# Surround your password with quotation marks if it has whitespace at the start
+# or end.
+username: 
+password: 
+
+# Project ID to monitor comments on.
+project: 0
+
+# The time between each check for comments in seconds. It is recommended that
+# this is not set below 1.
+delay: 1
+
+# If visual mode is enabled, the program will not attempt to log into Scratch
+# but will serve as a comment monitor instead.
+visual: false
+
+# If logging is enabled, data such as comment detection will be recorded to the
+# comment.log file.
+logging: true
+
+# If verbose mode is enabled, information that would normally be recorded in the
+# log alone will also be disabled in the console.
+verbose: true
+
+# Do not change this value! Seriously - it could reset your config.
+config_version: 1''')
+
+info("Loading config.yml...",l=False)
+
+conf = config.Config("config.yml")
+
+if (    "config_version" not in conf.config
+     or conf.config['config_version'] not in (1,)
+     or tuple in [type(conf.config[i]) for i in conf.config]    ):
+    info("config.yml does not exist or is corrupted. Recreating with default values.",2,l=False)
+    with open(conf.name,'r') as c, open(conf.name+".broken",'w') as b:
+        c.seek(0)
+        b.write(c.read())
+        c.close()
+        b.close()
+    with open(conf.name,'w') as f:
+        f.write(default_config_u)
+        f.close()
+    info("Please fill in config.yml appropriately and restart the program afterwards.",l=False)
+    raw_input("Press enter to exit...")
+    sysexit()
+else:
+    for i in default_config[:-1]:
+        if i.keys()[0] not in conf.config:
+            info(i.keys()[0]+" key missing from config.yml Recreating with default value.",1,l=False)
+            conf.write(i)
+
+try:
+    login_prompt   = bool(  conf.config['login_prompt']   )
+    username       = str(   conf.config['username']       )
+    password       = str(   conf.config['password']       )
+    project        = int(   conf.config['project']        )
+    delay          = float( conf.config['delay']          )
+    visual         = bool(  conf.config['visual']         )
+    logging        = bool(  conf.config['logging']        )
+    verbose        = bool(  conf.config['verbose']        )
+    config_version = int(   conf.config['config_version'] )
+except ValueError:
+    info("A key in config.yml has an illegal value. Please fix the value and restart the program.",2,l=False)
+    raw_input("Press enter to exit...")
+    sysexit()
+
+info("config.yml loaded.",l=False)
+
+# === Log ===
 
 if logging:
+    info("Loading comment.log...",l=False)
     try:
-        log = codecs.open("comment.log",'a',encoding="utf-8-sig")
-        log.write(  '\n'
-                   +time.strftime("%Y-%m-%d %H:%M:%S UTC",time.gmtime())
-                   +'\n'                                                 )
-    except:
-        info("Unable to open comment.log! Continuing with logging disabled.",1)
+        log = open("comment.log",'a',encoding="utf-8-sig")
+    except IOError:
+        info("Unable to open comment.log. Continuing with logging disabled.",1)
         logging = False
+    else:
+        log.write(  u'\n'
+                   +unicode(time.strftime(u"%Y-%m-%d %H:%M:%S UTC",time.gmtime()))
+                   +u'\n'                                                          )
+        info("comment.log loaded.")
+else:
+    info("Logging is disabled")
+
+# === Emoticon Map ===
+
+info("Loading emap.txt...")
 
 try:
     with open("emap.txt",'r') as f:
         mi = []
         for l in f:
             mi = csreplace(l,"\r\n").split(" | ")
-            emap[mi[1]] = mi[0]
+            if len(mi) == 2:
+                emap[mi[1]] = mi[0]
         del mi
         f.close()
-        info("emap.txt loaded")
 except IOError:
-    info("emap.txt not found! Continuing regardless.",1)
+    info("Unable to load emap.txt. Continuing regardless.",1)
+else:
+    info("emap.txt loaded.")
+
+# === Authentication ===
+
+if visual:
+    info("Visual mode is enabled. Skipping authentication.")
+elif login_prompt:
+    username = raw_input("[PROMPT] Username: ")
+    password = getpass.getpass("[PROMPT] Password: ")
+    scratch = scratchapi.ScratchUserSession(username,password)
+    while not scratch.tools.verify_session():
+        info("Login failed. Please try again.",l=False)
+        username = raw_input("[PROMPT] Username: ")
+        password = getpass.getpass("[PROMPT] Password: ")
+        system("cls")
+        scratch = scratchapi.ScratchUserSession(username,password)
+    info("Successfully logged in with account, "+username+'.')
+else:
+    info("Automatic login is enabled. Logging into user, "+username+'.')
+    for i in range(1,6):
+        scratch = scratchapi.ScratchUserSession(username,password)
+        info("Attempt "+str(i)+"...")
+        if scratch.tools.verify_session():
+            break
+        elif i == 5:
+            info("Unsuccessful after five attempts.",2)
+            raw_input("Press enter to exit...")
+            sysexit()
+        time.sleep(1)
+    info("Successfully logged in with account, "+username+'.')
+
+# === Main Loop ===
 
 p = scratchcomments.CommentsParser(emap)
 
+info("Initialisation successful.")
+
 while True:
-    while scratch.tools.verify_session():
+    while visual or scratch.tools.verify_session():
         try:
-            new_lc = p.parse(96895524,1)[0] #96895524
+            new_lc = p.parse(project,1)[0]
+        except urllib2.HTTPError as e:
+            info("HTTP Error "+str(e.code)+" when obtaining comments. Does the project exist?",1)
+            info("Reason: "+str(e.reason),1,v=True)
+        except urllib2.URLError as e:
+            info("URL Error when obtaining comments.",1)
+            info("Reason: "+str(e.reason),1,v=True)
+        else:
             if lc != new_lc:
                 lc = new_lc
                 enc = ''.join(  [str(ord(c) if ord(c) < 256 else 32).zfill(3) for c in lc['user']]
@@ -78,28 +211,22 @@ while True:
                 except UnicodeEncodeError:
                     info("Unable to display comment.",1)
                 info("Encoded: "+(enc[:30]+"..." if len(enc) > 30 else enc),v=True)
-                try:
-                    scratch.cloud.set_var("latest_comment",enc,96895524)
-                except Exception:
-                    info("Failed to send encoded data!",1)
-                    
-        except urllib2.HTTPError as e:
-            info("HTTP Error "+str(e.code)+" when obtaining comments.",1)
-            info("Reason: "+str(e.reason),1,v=True)
-        except urllib2.URLError as e:
-            info("URL Error when obtaining comments.",1)
-            info("Reason: "+str(e.reason),1,v=True)
-        time.sleep(1)
+                if not visual:
+                    try:
+                        scratch.cloud.set_var("latest_comment",enc,project)
+                    except Exception:
+                        info("Failed to send encoded data.",1)
+        time.sleep(delay)
     info("Session invalidated. Did Scratch go down?",1)
     while not scratch.tools.verify_session():
         for i in range(1,6):
-            scratch = scratchapi.ScratchUserSession(login[0],login[1])
             info("Attempting to start new session... (Attempt "+str(i)+')')
+            scratch = scratchapi.ScratchUserSession(username,password)
             if scratch.tools.verify_session():
                 info("Successful!")
                 break
             elif i == 5:
-                info("Unsuccessful! Sleeping for one minute.",1)
-            time.sleep(1)
+                info("Unsuccessful. Sleeping for one minute.",1)
+            time.sleep(delay)
         if not scratch.tools.verify_session():
             time.sleep(59)
