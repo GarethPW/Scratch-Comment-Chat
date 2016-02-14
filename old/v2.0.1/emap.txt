@@ -1,0 +1,10 @@
+_meow_ | //cdn.scratch.mit.edu/scratchr2/static/__1715086c15b6be5a55a89875ebe52dac__//images/easter_eggs/meow.png
+_gobo_ | //cdn.scratch.mit.edu/scratchr2/static/__1715086c15b6be5a55a89875ebe52dac__//images/easter_eggs/gobo.png
+_waffle_ | //cdn.scratch.mit.edu/scratchr2/static/__1715086c15b6be5a55a89875ebe52dac__//images/easter_eggs/waffle.png
+_taco_ | //cdn.scratch.mit.edu/scratchr2/static/__1715086c15b6be5a55a89875ebe52dac__//images/easter_eggs/taco.png
+_eggplant_ | //cdn.scratch.mit.edu/scratchr2/static/__1715086c15b6be5a55a89875ebe52dac__//images/easter_eggs/eggplant.png
+_sushi_ | //cdn.scratch.mit.edu/scratchr2/static/__1715086c15b6be5a55a89875ebe52dac__//images/easter_eggs/sushi.png
+_apple_ | //cdn.scratch.mit.edu/scratchr2/static/__1715086c15b6be5a55a89875ebe52dac__//images/easter_eggs/apple.png
+_broccoli_ | //cdn.scratch.mit.edu/scratchr2/static/__1715086c15b6be5a55a89875ebe52dac__//images/easter_eggs/broccoli.png
+_pizza_ | //cdn.scratch.mit.edu/scratchr2/static/__1715086c15b6be5a55a89875ebe52dac__//images/easter_eggs/pizza.png
+_candycorn_ | //cdn.scratch.mit.edu/scratchr2/static/__1715086c15b6be5a55a89875ebe52dac__//images/easter_eggs/candycorn.png
