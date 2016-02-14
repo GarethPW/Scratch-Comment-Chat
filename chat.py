@@ -1,5 +1,6 @@
 '''
-    Scratch Comment Viewer Server v2.1.0
+    Scratch Comment Chat Server v1.0.0
+    Based on Scratch Comment Viewer Server v2.1.0
 
     Created by Scratch user, Gaza101.
     Licensed under GNU General Public License v3.
