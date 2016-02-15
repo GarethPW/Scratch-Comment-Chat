@@ -1,6 +1,6 @@
 '''
-    Scratch Project Comments Parser v1.0.2
-    Created for use with SCV Server v2.1.3
+    Scratch Project Comments Parser v1.0.3
+    Created for use with SCV Server v2.1.4
 
     Created by Scratch user, Gaza101.
     Licensed under GNU General Public License v3.
@@ -49,7 +49,9 @@ class CommentsParser(HTMLParser):
         il = (self.isCName(self.nest),self.isCBody(self.nest))
         self.nest.append((tag,self.aDict(attrs)))
         if il != (self.isCName(self.nest),self.isCBody(self.nest)): #Check if a new comment username or body has begun.
-            self.out.append([]) #If so, append new list to output array.
+            if self.isCName(self.nest) and not il[0]:
+                self.out.append([self.nest[-4][1]['data-comment-id'][0]]) #If a new comment username has begun, append comment id to output array.
+            self.out.append([]) #If a new comment username or body has begun, append new list to output array.
         if tag == "img": #If the tag is valid to be an emoticon,
             if (     self.isCBody(self.nest)
                  and self.isLegal(self.nest,[ tuple(),
@@ -79,6 +81,7 @@ class CommentsParser(HTMLParser):
             self.nest = []
             self.reset() #Reset the parser.
             self.feed(self.comments) #Feed the parser the data from the comments of the project specified.
-            self.out =  tuple( [{"user": u''.join([u''.join([unichr(ord(c)) for c in m]) for m in self.out[i]]), #Convert parsed data into a more usable format. e.g. {'user','Gaza101','msg':'_meow_'}
-                                  "msg": u''.join([u''.join([unichr(ord(c)) for c in m]) for m in self.out[i+1]])[23:-12]} for i in range(0,min(len(self.out),max_comments),2)] )
+            self.out =  tuple( [{  "id": int(self.out[i][0]), #Convert parsed data into a more usable format. e.g. ({'id': 54852378, 'user': 'Gaza101', 'msg': '_waffle_'}, ...)
+                                 "user": u''.join([u''.join([unichr(ord(c)) for c in m]) for m in self.out[i+1]]),
+                                  "msg": u''.join([u''.join([unichr(ord(c)) for c in m]) for m in self.out[i+2]])[23:-12]} for i in range(0,min(len(self.out),max_comments),3)] )
         return self.out #Output parsed data.

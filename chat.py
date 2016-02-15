@@ -1,6 +1,6 @@
 '''
     Scratch Comment Chat Server v1.0.0
-    Based on Scratch Comment Viewer Server v2.1.3
+    Based on Scratch Comment Viewer Server v2.1.4
 
     Created by Scratch user, Gaza101.
     Licensed under GNU General Public License v3.
@@ -221,9 +221,10 @@ while True:
                 enc = ''.join(  [str(ord(c) if ord(c) < 256 else 32).zfill(3) for c in lc['user']]
                                +["000"]
                                +[str(ord(c) if ord(c) < 256 else 32).zfill(3) for c in lc['msg']]  )
-                info("New comment! Author: "+lc['user'],v=True)
+                info("New comment! ID: "+str(lc['id']),v=True)
+                info("Author: "+lc['user'],v=True)
                 try:
-                    info(lc['msg'],v=True)
+                    info(u"Body: "+lc['msg'],v=True)
                 except UnicodeEncodeError:
                     info("Unable to display comment.",1)
                 info("Encoded: "+(enc[:30]+"..." if len(enc) > 30 else enc),v=True)
