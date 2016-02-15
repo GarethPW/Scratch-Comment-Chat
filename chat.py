@@ -1,6 +1,6 @@
 '''
     Scratch Comment Chat Server v1.0.0
-    Based on Scratch Comment Viewer Server v2.1.2
+    Based on Scratch Comment Viewer Server v2.1.3
 
     Created by Scratch user, Gaza101.
     Licensed under GNU General Public License v3.
@@ -28,6 +28,11 @@ def csreplace(s,o,n=''):
     for i in o: #For every find character,
         s = s.replace(i,n) #Replace with the new character.
     return s
+
+ver = "1.0.0"
+
+print (  "Gaza101's Scratch Comment Chat Server v"+ver
+        +"\nWith thanks to Dylan5797 and DadOfMrLog\n"   )
 
 emap = {}
 new_lc = tuple()
