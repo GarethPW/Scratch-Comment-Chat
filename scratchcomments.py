@@ -1,6 +1,6 @@
 '''
-    Scratch Project Comments Parser v1.0.1
-    Created for use with SCV Server v2.1.1
+    Scratch Project Comments Parser v1.0.2
+    Created for use with SCV Server v2.1.2
 
     Created by Scratch user, Gaza101.
     Licensed under GNU General Public License v3.
@@ -71,8 +71,8 @@ class CommentsParser(HTMLParser):
     def handle_charref(self,name):
         if self.isCName(self.nest) or self.isCBody(self.nest): #If we're in valid comment text,
             self.out[-1].append(unichr(int(name[1:],16) if name[0] == 'x' else int(name))) #Append text to output.
-    def parse(self,project_id,max_comments=30,to=1): #Parses any data given. Data must be complete.
-        comments = urlopen("https://scratch.mit.edu/site-api/comments/project/"+str(project_id)+'/',timeout=to).read()
+    def parse(self,project_id,max_comments=30,page=1,to=1): #Parses any data given. Data must be complete.
+        comments = urlopen("https://scratch.mit.edu/site-api/comments/project/"+str(project_id)+"/?page="+str(page),timeout=to).read()
         if self.comments != comments: #If we haven't already parsed this,
             self.comments = comments
             self.out = [] #Reinitialise the instance.
