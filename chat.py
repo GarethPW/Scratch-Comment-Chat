@@ -1,6 +1,6 @@
 '''
     Scratch Comment Chat Server v1.0.0
-    Based on Scratch Comment Viewer Server v2.1.0
+    Based on Scratch Comment Viewer Server v2.1.1
 
     Created by Scratch user, Gaza101.
     Licensed under GNU General Public License v3.
@@ -36,15 +36,16 @@ enc = str()
 
 # === Configuration ===
 
-default_config = ( {"login_prompt"  : "true" },
-                   {"username"      : ''     },
-                   {"password"      : ''     },
-                   {"project"       : 0      },
-                   {"delay"         : 1      },
-                   {"visual"        : "false"},
-                   {"logging"       : "true" },
-                   {"verbose"       : "true" },
-                   {"config_version": 1      }  )
+default_config = ( {"login_prompt"   : "true" },
+                   {"username"       : ''     },
+                   {"password"       : ''     },
+                   {"project"        : 0      },
+                   {"delay"          : 1      },
+                   {"comment_timeout": 10     },
+                   {"visual"         : "false"},
+                   {"logging"        : "true" },
+                   {"verbose"        : "true" },
+                   {"config_version" : 1      }  )
 default_config_u = (
 u'''# Prompt for login? Set to false to automagically login with preset username and
 # password.
@@ -62,6 +63,10 @@ project: 0
 # The time between each check for comments in seconds. It is recommended that
 # this is not set below 1.
 delay: 1
+
+# The maximum amount of time that the program can spend retrieving the comment
+# data in seconds. Leave this at 10 if you're unsure.
+comment_timeout: 10
 
 # If visual mode is enabled, the program will not attempt to log into Scratch
 # but will serve as a comment monitor instead.
@@ -104,15 +109,16 @@ else:
             conf.write(i)
 
 try:
-    login_prompt   = bool(  conf.config['login_prompt']   )
-    username       = str(   conf.config['username']       )
-    password       = str(   conf.config['password']       )
-    project        = int(   conf.config['project']        )
-    delay          = float( conf.config['delay']          )
-    visual         = bool(  conf.config['visual']         )
-    logging        = bool(  conf.config['logging']        )
-    verbose        = bool(  conf.config['verbose']        )
-    config_version = int(   conf.config['config_version'] )
+    login_prompt    = bool(  conf.config['login_prompt']    )
+    username        = str(   conf.config['username']        )
+    password        = str(   conf.config['password']        )
+    project         = int(   conf.config['project']         )
+    delay           = float( conf.config['delay']           )
+    comment_timeout = float( conf.config['comment_timeout'] )
+    visual          = bool(  conf.config['visual']          )
+    logging         = bool(  conf.config['logging']         )
+    verbose         = bool(  conf.config['verbose']         )
+    config_version  = int(   conf.config['config_version']  )
 except ValueError:
     info("A key in config.yml has an illegal value. Please fix the value and restart the program.",2,l=False)
     raw_input("Press enter to exit...")
@@ -160,24 +166,28 @@ else:
 if visual:
     info("Visual mode is enabled. Skipping authentication.")
 elif login_prompt:
-    username = raw_input("[PROMPT] Username: ")
-    password = getpass.getpass("[PROMPT] Password: ")
-    scratch = scratchapi.ScratchUserSession(username,password)
-    while not scratch.tools.verify_session():
-        info("Login failed. Please try again.",l=False)
+    while True:
         username = raw_input("[PROMPT] Username: ")
         password = getpass.getpass("[PROMPT] Password: ")
-        system("cls")
-        scratch = scratchapi.ScratchUserSession(username,password)
+        try:
+            scratch = scratchapi.ScratchUserSession(username,password)
+            if scratch.tools.verify_session():
+                break
+        except StandardError:
+            pass
+        info("Login failed. Please try again.",2,l=False)
     info("Successfully logged in with account, "+username+'.')
 else:
     info("Automatic login is enabled. Logging into user, "+username+'.')
     for i in range(1,6):
-        scratch = scratchapi.ScratchUserSession(username,password)
         info("Attempt "+str(i)+"...")
-        if scratch.tools.verify_session():
-            break
-        elif i == 5:
+        try:
+            scratch = scratchapi.ScratchUserSession(username,password)
+            if scratch.tools.verify_session():
+                break
+        except StandardError:
+            pass
+        if i == 5:
             info("Unsuccessful after five attempts.",2)
             raw_input("Press enter to exit...")
             sysexit()
@@ -191,9 +201,9 @@ p = scratchcomments.CommentsParser(emap)
 info("Initialisation successful.")
 
 while True:
-    while visual or scratch.tools.verify_session():
+    while True:
         try:
-            new_lc = p.parse(project,1)[0]
+            new_lc = p.parse(project,1,comment_timeout)[0]
         except urllib2.HTTPError as e:
             info("HTTP Error "+str(e.code)+" when obtaining comments. Does the project exist?",1)
             info("Reason: "+str(e.reason),1,v=True)
@@ -215,19 +225,32 @@ while True:
                 if not visual:
                     try:
                         scratch.cloud.set_var("latest_comment",enc,project)
-                    except Exception:
+                    except StandardError:
                         info("Failed to send encoded data.",1)
+        if not visual:
+            try:
+                if not scratch.tools.verify_session():
+                    raise StandardError
+            except StandardError:
+                break
         time.sleep(delay)
     info("Session invalidated. Did Scratch go down?",1)
-    while not scratch.tools.verify_session():
+    while True:
         for i in range(1,6):
             info("Attempting to start new session... (Attempt "+str(i)+')')
-            scratch = scratchapi.ScratchUserSession(username,password)
-            if scratch.tools.verify_session():
-                info("Successful!")
-                break
-            elif i == 5:
+            try:
+                scratch = scratchapi.ScratchUserSession(username,password)
+                if scratch.tools.verify_session():
+                    info("Successful!")
+                    break
+            except StandardError:
+                pass
+            if i == 5:
                 info("Unsuccessful. Sleeping for one minute.",1)
             time.sleep(delay)
-        if not scratch.tools.verify_session():
-            time.sleep(59)
+        try:
+            if scratch.tools.verify_session():
+                break
+        except StandardError:
+            pass
+        time.sleep(59)
