@@ -1,6 +1,6 @@
 '''
     Scratch Project Comments Parser v1.0.3
-    Created for use with SCV Server v2.1.4
+    Created for use with SCV Server v2.1.5
 
     Created by Scratch user, Gaza101.
     Licensed under GNU General Public License v3.

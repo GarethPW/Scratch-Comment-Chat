@@ -1,6 +1,6 @@
 '''
     Scratch Comment Chat Server v1.0.0
-    Based on Scratch Comment Viewer Server v2.1.4
+    Based on Scratch Comment Viewer Server v2.1.5
 
     Created by Scratch user, Gaza101.
     Licensed under GNU General Public License v3.
@@ -13,23 +13,33 @@ if __name__ != "__main__": sysexit()
 # === Initialisation ===
 
 import config,scratchapi,scratchcomments
-import getpass,time,urllib2
-from os import system
+import getpass,time,urllib2,os
 from io import open
 
-def info(s,c=0,l=True,v=False):
+def info(s,c=0,l=True,v=False,f=True):
     m = '['+["INFO","WARNING","ERROR"][c]+"] "+s
     if (not v) or (v and verbose):
         print m
     if l and logging:
         log.write(unicode(time.strftime("[%H:%M:%S] ",time.gmtime()))+unicode(m)+u'\n')
+        if f:
+            log.flush()
+            os.fsync(log.fileno())
 
 def csreplace(s,o,n=''):
     for i in o: #For every find character,
         s = s.replace(i,n) #Replace with the new character.
     return s
 
+def custom_fallback(prompt="Password: ",stream=None):
+    info("Unable to hide password. Make sure no-one else can see your screen!",1,False)
+    return getpass._raw_input(prompt)
+
+getpass.fallback_getpass = custom_fallback
+
 ver = "1.0.0"
+
+os.system("cls" if os.name == "nt" else "clear")
 
 print (  "Gaza101's Scratch Comment Chat Server v"+ver
         +"\nWith thanks to Dylan5797 and DadOfMrLog\n"   )
@@ -95,7 +105,7 @@ conf = config.Config("config.yml")
 if (    "config_version" not in conf.config
      or conf.config['config_version'] not in (1,)
      or tuple in [type(conf.config[i]) for i in conf.config]    ):
-    info("config.yml does not exist or is corrupted. Recreating with default values.",2,l=False)
+    info("config.yml does not exist or is corrupted. Recreating with default values.",2,False)
     with open(conf.name,'r') as c, open(conf.name+".broken",'w') as b:
         c.seek(0)
         b.write(c.read())
@@ -110,7 +120,7 @@ if (    "config_version" not in conf.config
 else:
     for i in default_config[:-1]:
         if i.keys()[0] not in conf.config:
-            info(i.keys()[0]+" key missing from config.yml Recreating with default value.",1,l=False)
+            info(i.keys()[0]+" key missing from config.yml Recreating with default value.",1,False)
             conf.write(i)
 
 try:
@@ -125,7 +135,7 @@ try:
     verbose         = bool(  conf.config['verbose']         )
     config_version  = int(   conf.config['config_version']  )
 except ValueError:
-    info("A key in config.yml has an illegal value. Please fix the value and restart the program.",2,l=False)
+    info("A key in config.yml has an illegal value. Please fix the value and restart the program.",2,False)
     raw_input("Press enter to exit...")
     sysexit()
 
@@ -138,8 +148,8 @@ if logging:
     try:
         log = open("comment.log",'a',encoding="utf-8-sig")
     except IOError:
-        info("Unable to open comment.log. Continuing with logging disabled.",1)
         logging = False
+        info("Unable to open comment.log. Continuing with logging disabled.",1)
     else:
         log.write(  u'\n'
                    +unicode(time.strftime(u"%Y-%m-%d %H:%M:%S UTC",time.gmtime()))
@@ -180,7 +190,7 @@ elif login_prompt:
                 break
         except StandardError:
             pass
-        info("Login failed. Please try again.",2,l=False)
+        info("Login failed. Please try again.",2,False)
     info("Successfully logged in with account, "+username+'.')
 else:
     info("Automatic login is enabled. Logging into user, "+username+'.')
@@ -210,10 +220,10 @@ while True:
         try:
             new_lc = p.parse(project,1,to=comment_timeout)[0]
         except urllib2.HTTPError as e:
-            info("HTTP Error "+str(e.code)+" when obtaining comments. Does the project exist?",1)
+            info("HTTP Error "+str(e.code)+" when obtaining comments. Does the project exist?",1,f=False)
             info("Reason: "+str(e.reason),1,v=True)
         except urllib2.URLError as e:
-            info("URL Error when obtaining comments.",1)
+            info("URL Error when obtaining comments.",1,f=False)
             info("Reason: "+str(e.reason),1,v=True)
         else:
             if lc != new_lc:
@@ -221,18 +231,20 @@ while True:
                 enc = ''.join(  [str(ord(c) if ord(c) < 256 else 32).zfill(3) for c in lc['user']]
                                +["000"]
                                +[str(ord(c) if ord(c) < 256 else 32).zfill(3) for c in lc['msg']]  )
-                info("New comment! ID: "+str(lc['id']),v=True)
-                info("Author: "+lc['user'],v=True)
+                info("New comment! ID: "+str(lc['id']),v=True,f=False)
+                info("Author: "+lc['user'],v=True,f=False)
                 try:
-                    info(u"Body: "+lc['msg'],v=True)
+                    info(u"Body: "+lc['msg'],v=True,f=False)
                 except UnicodeEncodeError:
-                    info("Unable to display comment.",1)
-                info("Encoded: "+(enc[:30]+"..." if len(enc) > 30 else enc),v=True)
+                    info("Unable to display comment.",1,f=False)
+                info("Encoded: "+(enc[:30]+"..." if len(enc) > 30 else enc),v=True,f=False)
                 if not visual:
                     try:
                         scratch.cloud.set_var("latest_comment",enc,project)
                     except StandardError:
-                        info("Failed to send encoded data.",1)
+                        info("Failed to send encoded data.",1,f=False)
+                log.flush()
+                os.fsync(log.fileno())
         if not visual:
             try:
                 if not scratch.tools.verify_session():
@@ -242,8 +254,10 @@ while True:
         time.sleep(delay)
     info("Session invalidated. Did Scratch go down?",1)
     while True:
+        if not verbose:
+            info("Attempting to start new session...",l=False)
         for i in range(1,6):
-            info("Attempting to start new session... (Attempt "+str(i)+')')
+            info("Attempting to start new session... (Attempt "+str(i)+')',v=True)
             try:
                 scratch = scratchapi.ScratchUserSession(username,password)
                 if scratch.tools.verify_session():
@@ -253,10 +267,11 @@ while True:
                 pass
             if i == 5:
                 info("Unsuccessful. Sleeping for one minute.",1)
-            time.sleep(delay)
+            else:
+                time.sleep(delay)
         try:
             if scratch.tools.verify_session():
                 break
         except StandardError:
             pass
-        time.sleep(59)
+        time.sleep(60)
