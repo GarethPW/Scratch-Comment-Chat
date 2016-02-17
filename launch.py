@@ -8,7 +8,7 @@ rn = str()
 rs = 1
 
 try:
-    execfile("comment.py",env)
+    execfile("chat.py",env)
 except Exception as e:
     rn = "crash_"+time.strftime("%Y-%m-%d-utc",time.gmtime())
     print "[ERROR] It looks like something broke! Generating crash report."
