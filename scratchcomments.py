@@ -1,6 +1,6 @@
 '''
-    Scratch Project Comments Parser v1.0.3
-    Created for use with SCV Server v2.1.5
+    Scratch Project Comments Parser v1.1.0
+    Created for use with SCV Server v2.1.6
 
     Created by Scratch user, Gaza101.
     Licensed under GNU General Public License v3.
@@ -73,10 +73,9 @@ class CommentsParser(HTMLParser):
     def handle_charref(self,name):
         if self.isCName(self.nest) or self.isCBody(self.nest): #If we're in valid comment text,
             self.out[-1].append(unichr(int(name[1:],16) if name[0] == 'x' else int(name))) #Append text to output.
-    def parse(self,project_id,max_comments=30,page=1,to=1): #Parses any data given. Data must be complete.
-        comments = urlopen("https://scratch.mit.edu/site-api/comments/project/"+str(project_id)+"/?page="+str(page),timeout=to).read()
-        if self.comments != comments: #If we haven't already parsed this,
-            self.comments = comments
+    def parse(self,data,max_comments=30,page=1,to=1): #Parses any data given. Data must be complete.
+        if self.comments != data: #If we haven't already parsed this,
+            self.comments = data
             self.out = [] #Reinitialise the instance.
             self.nest = []
             self.reset() #Reset the parser.
@@ -85,3 +84,9 @@ class CommentsParser(HTMLParser):
                                  "user": u''.join([u''.join([unichr(ord(c)) for c in m]) for m in self.out[i+1]]),
                                   "msg": u''.join([u''.join([unichr(ord(c)) for c in m]) for m in self.out[i+2]])[23:-12]} for i in range(0,min(len(self.out),max_comments),3)] )
         return self.out #Output parsed data.
+    def parse_project(self,project_id,max_comments=30,page=1,to=1): #Parses any data given. Data must be complete.
+        comments = urlopen("https://scratch.mit.edu/site-api/comments/project/"+str(project_id)+"/?page="+str(page),timeout=to).read()
+        return self.parse(comments,max_comments,page,to)
+    def parse_user(self,user,max_comments=30,page=1,to=1): #Parses any data given. Data must be complete.
+        comments = urlopen("https://scratch.mit.edu/site-api/comments/user/"+user+"/?page="+str(page),timeout=to).read()
+        return self.parse(comments,max_comments,page,to)

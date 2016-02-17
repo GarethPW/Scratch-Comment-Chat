@@ -1,6 +1,6 @@
 '''
     Scratch Comment Chat Server v1.0.0
-    Based on Scratch Comment Viewer Server v2.1.5
+    Based on Scratch Comment Viewer Server v2.1.6
 
     Created by Scratch user, Gaza101.
     Licensed under GNU General Public License v3.
@@ -8,7 +8,7 @@
 '''
 
 from sys import exit as sysexit
-if __name__ != "__main__": sysexit()
+if __name__ not in ("__main__","__builtin__"): sysexit()
 
 # === Initialisation ===
 
@@ -218,7 +218,7 @@ info("Initialisation successful.")
 while True:
     while True:
         try:
-            new_lc = p.parse(project,1,to=comment_timeout)[0]
+            new_lc = p.parse_project(project,1,to=comment_timeout)[0]
         except urllib2.HTTPError as e:
             info("HTTP Error "+str(e.code)+" when obtaining comments. Does the project exist?",1,f=False)
             info("Reason: "+str(e.reason),1,v=True)
