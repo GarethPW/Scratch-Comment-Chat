@@ -1,6 +1,6 @@
 '''
-    Basic Config Manager v1.0.0
-    Created for use with SCV Server v2.1.6
+    Basic Config Manager v1.0.1
+    Created for use with SCV Server v2.1.7
 
     Created by Scratch user, Gaza101.
     Licensed under GNU General Public License v3.
@@ -26,7 +26,7 @@ class Config:
                             continue
                         elif (     len(di[1]) >= 2
                                and di[1][0]+di[1][-1] in (u'""',u"''") ):
-                            pass
+                            di[1] = di[1][1:-1]
                         elif di[1].lower() in (u"true",u'1',u"yes",u'y',u"on"):
                             di[1] = True
                         elif di[1].lower() in (u"false",u'0',u"no",u'n',u"off"):

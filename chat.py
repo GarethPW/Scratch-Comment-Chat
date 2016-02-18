@@ -1,6 +1,6 @@
 '''
     Scratch Comment Chat Server v1.0.0
-    Based on Scratch Comment Viewer Server v2.1.6
+    Based on Scratch Comment Viewer Server v2.1.7
 
     Created by Scratch user, Gaza101.
     Licensed under GNU General Public License v3.
@@ -46,8 +46,9 @@ print (  "Gaza101's Scratch Comment Chat Server v"+ver
 
 emap = {}
 new_lc = tuple()
-lc = tuple()
-enc = str()
+lc = ({"id": 0},)
+chatlog = []
+idlog = []
 
 # === Configuration ===
 
@@ -55,6 +56,7 @@ default_config = ( {"login_prompt"   : "true" },
                    {"username"       : ''     },
                    {"password"       : ''     },
                    {"project"        : 0      },
+                   {"comment_prefix" : '#'    },
                    {"delay"          : 1      },
                    {"comment_timeout": 10     },
                    {"visual"         : "false"},
@@ -74,6 +76,11 @@ password:
 
 # Project ID to monitor comments on.
 project: 0
+
+# Characters that a comment must begin with in order to be recognised as a chat
+# message. Use '' (with quotation marks) to make all comments a chat message.
+# This value is case sensitive.
+comment_prefix: '#'
 
 # The time between each check for comments in seconds. It is recommended that
 # this is not set below 1.
@@ -124,16 +131,17 @@ else:
             conf.write(i)
 
 try:
-    login_prompt    = bool(  conf.config['login_prompt']    )
-    username        = str(   conf.config['username']        )
-    password        = str(   conf.config['password']        )
-    project         = int(   conf.config['project']         )
-    delay           = float( conf.config['delay']           )
-    comment_timeout = float( conf.config['comment_timeout'] )
-    visual          = bool(  conf.config['visual']          )
-    logging         = bool(  conf.config['logging']         )
-    verbose         = bool(  conf.config['verbose']         )
-    config_version  = int(   conf.config['config_version']  )
+    login_prompt    = bool(    conf.config['login_prompt']    )
+    username        = str(     conf.config['username']        )
+    password        = str(     conf.config['password']        )
+    project         = int(     conf.config['project']         )
+    comment_prefix  = unicode( conf.config['comment_prefix']  )
+    delay           = float(   conf.config['delay']           )
+    comment_timeout = float(   conf.config['comment_timeout'] )
+    visual          = bool(    conf.config['visual']          )
+    logging         = bool(    conf.config['logging']         )
+    verbose         = bool(    conf.config['verbose']         )
+    config_version  = int(     conf.config['config_version']  )
 except ValueError:
     info("A key in config.yml has an illegal value. Please fix the value and restart the program.",2,False)
     raw_input("Press enter to exit...")
@@ -218,7 +226,7 @@ info("Initialisation successful.")
 while True:
     while True:
         try:
-            new_lc = p.parse_project(project,1,to=comment_timeout)[0]
+            new_lc = p.parse_project(project,to=comment_timeout)
         except urllib2.HTTPError as e:
             info("HTTP Error "+str(e.code)+" when obtaining comments. Does the project exist?",1,f=False)
             info("Reason: "+str(e.reason),1,v=True)
@@ -226,25 +234,37 @@ while True:
             info("URL Error when obtaining comments.",1,f=False)
             info("Reason: "+str(e.reason),1,v=True)
         else:
-            if lc != new_lc:
+            if len(new_lc) != 0 and lc[0]['id'] != new_lc[0]['id']:
                 lc = new_lc
-                enc = ''.join(  [str(ord(c) if ord(c) < 256 else 32).zfill(3) for c in lc['user']]
-                               +["000"]
-                               +[str(ord(c) if ord(c) < 256 else 32).zfill(3) for c in lc['msg']]  )
-                info("New comment! ID: "+str(lc['id']),v=True,f=False)
-                info("Author: "+lc['user'],v=True,f=False)
-                try:
-                    info(u"Body: "+lc['msg'],v=True,f=False)
-                except UnicodeEncodeError:
-                    info("Unable to display comment.",1,f=False)
-                info("Encoded: "+(enc[:30]+"..." if len(enc) > 30 else enc),v=True,f=False)
-                if not visual:
-                    try:
-                        scratch.cloud.set_var("latest_comment",enc,project)
-                    except StandardError:
-                        info("Failed to send encoded data.",1,f=False)
+                for i in reversed(lc):
+                    if (     i['id'] not in idlog
+                         and i['msg'][:len(comment_prefix)] == comment_prefix ):
+                        idlog.append(i['id'])
+                        chatlog.append(''.join(  [hex(ord(c) if ord(c) < 256 else 32)[2:].zfill(2) for c in str(i['id'])]
+                                                +["00"]
+                                                +[hex(ord(c) if ord(c) < 256 else 32)[2:].zfill(2) for c in i['user']]
+                                                +["00"]
+                                                +[hex(ord(c) if ord(c) < 256 else 32)[2:].zfill(2) for c in i['msg'][len(comment_prefix):]]
+                                                +["00"]                                                                       ))
+                        info("New comment! ID: "+str(i['id']),v=True,f=False)
+                        info("Author: "+i['user'],v=True,f=False)
+                        try:
+                            info(u"Body: "+i['msg'][len(comment_prefix):],v=True,f=False)
+                        except UnicodeEncodeError:
+                            info("Unable to display comment.",1,v=True,f=False)
+                        info("Encoded: "+(chatlog[-1][:30]+"..." if len(chatlog[-1]) > 30 else chatlog[-1]),v=True,f=False)
                 log.flush()
                 os.fsync(log.fileno())
+                while sum([len(i) for i in chatlog]) > 10238:
+                    del idlog[0],chatlog[0]
+                if not visual:
+                    info("Sending encoded data...",v=True,f=False)
+                    try:
+                        scratch.cloud.set_var("scratchchat","0x"+''.join(chatlog),project)
+                    except StandardError:
+                        info("Failed to send encoded data.",1)
+                    else:
+                        info("Successful!",v=True)
         if not visual:
             try:
                 if not scratch.tools.verify_session():

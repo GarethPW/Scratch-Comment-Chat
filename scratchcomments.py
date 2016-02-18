@@ -1,6 +1,6 @@
 '''
-    Scratch Project Comments Parser v1.1.0
-    Created for use with SCV Server v2.1.6
+    Scratch Project Comments Parser v1.1.1
+    Created for use with SCV Server v2.1.7
 
     Created by Scratch user, Gaza101.
     Licensed under GNU General Public License v3.
@@ -82,7 +82,7 @@ class CommentsParser(HTMLParser):
             self.feed(self.comments) #Feed the parser the data from the comments of the project specified.
             self.out =  tuple( [{  "id": int(self.out[i][0]), #Convert parsed data into a more usable format. e.g. ({'id': 54852378, 'user': 'Gaza101', 'msg': '_waffle_'}, ...)
                                  "user": u''.join([u''.join([unichr(ord(c)) for c in m]) for m in self.out[i+1]]),
-                                  "msg": u''.join([u''.join([unichr(ord(c)) for c in m]) for m in self.out[i+2]])[23:-12]} for i in range(0,min(len(self.out),max_comments),3)] )
+                                  "msg": u''.join([u''.join([unichr(ord(c)) for c in m]) for m in self.out[i+2]])[23:-12]} for i in range(0,min(len(self.out),max_comments*3),3)] )
         return self.out #Output parsed data.
     def parse_project(self,project_id,max_comments=30,page=1,to=1): #Parses any data given. Data must be complete.
         comments = urlopen("https://scratch.mit.edu/site-api/comments/project/"+str(project_id)+"/?page="+str(page),timeout=to).read()
