@@ -1,5 +1,5 @@
 '''
-    Scratch Comment Chat Server v1.0.0
+    Scratch Comment Chat Server v1.0.1
     Based on Scratch Comment Viewer Server v2.1.7
 
     Created by Scratch user, Gaza101.
@@ -37,7 +37,7 @@ def custom_fallback(prompt="Password: ",stream=None):
 
 getpass.fallback_getpass = custom_fallback
 
-ver = "1.0.0"
+ver = "1.0.1"
 
 os.system("cls" if os.name == "nt" else "clear")
 
@@ -196,7 +196,7 @@ elif login_prompt:
             scratch = scratchapi.ScratchUserSession(username,password)
             if scratch.tools.verify_session():
                 break
-        except StandardError:
+        except Exception:
             pass
         info("Login failed. Please try again.",2,False)
     info("Successfully logged in with account, "+username+'.')
@@ -208,7 +208,7 @@ else:
             scratch = scratchapi.ScratchUserSession(username,password)
             if scratch.tools.verify_session():
                 break
-        except StandardError:
+        except Exception:
             pass
         if i == 5:
             info("Unsuccessful after five attempts.",2)
@@ -228,11 +228,14 @@ while True:
         try:
             new_lc = p.parse_project(project,to=comment_timeout)
         except urllib2.HTTPError as e:
-            info("HTTP Error "+str(e.code)+" when obtaining comments. Does the project exist?",1,f=False)
+            info("HTTP error "+str(e.code)+" when obtaining comments. Does the project exist?",1,f=False)
             info("Reason: "+str(e.reason),1,v=True)
         except urllib2.URLError as e:
-            info("URL Error when obtaining comments.",1,f=False)
+            info("URL error when obtaining comments.",1,f=False)
             info("Reason: "+str(e.reason),1,v=True)
+        except Exception as e:
+            info("Unknown error when obtaining comments.",1,f=False)
+            info("Reason: "+str(e.__class__.__name__),1,v=True)
         else:
             if len(new_lc) != 0 and lc[0]['id'] != new_lc[0]['id']:
                 lc = new_lc
@@ -261,15 +264,15 @@ while True:
                     info("Sending encoded data...",v=True,f=False)
                     try:
                         scratch.cloud.set_var("scratchchat","0x"+''.join(chatlog),project)
-                    except StandardError:
+                    except Exception:
                         info("Failed to send encoded data.",1)
                     else:
                         info("Successful!",v=True)
         if not visual:
             try:
                 if not scratch.tools.verify_session():
-                    raise StandardError
-            except StandardError:
+                    raise Exception
+            except Exception:
                 break
         time.sleep(delay)
     info("Session invalidated. Did Scratch go down?",1)
@@ -283,7 +286,7 @@ while True:
                 if scratch.tools.verify_session():
                     info("Successful!")
                     break
-            except StandardError:
+            except Exception:
                 pass
             if i == 5:
                 info("Unsuccessful. Sleeping for one minute.",1)
@@ -292,6 +295,6 @@ while True:
         try:
             if scratch.tools.verify_session():
                 break
-        except StandardError:
+        except Exception:
             pass
         time.sleep(60)
