@@ -1,5 +1,5 @@
 '''
-    Scratch Comment Chat Server v1.0.1
+    Scratch Comment Chat Server v1.0.2
     Based on Scratch Comment Viewer Server v2.1.7
 
     Created by Scratch user, Gaza101.
@@ -37,7 +37,7 @@ def custom_fallback(prompt="Password: ",stream=None):
 
 getpass.fallback_getpass = custom_fallback
 
-ver = "1.0.1"
+ver = "1.0.2"
 
 os.system("cls" if os.name == "nt" else "clear")
 
@@ -152,17 +152,17 @@ info("config.yml loaded.",l=False)
 # === Log ===
 
 if logging:
-    info("Loading comment.log...",l=False)
+    info("Loading chat.log...",l=False)
     try:
-        log = open("comment.log",'a',encoding="utf-8-sig")
+        log = open("chat.log",'a',encoding="utf-8-sig")
     except IOError:
         logging = False
-        info("Unable to open comment.log. Continuing with logging disabled.",1)
+        info("Unable to open chat.log. Continuing with logging disabled.",1)
     else:
         log.write(  u'\n'
                    +unicode(time.strftime(u"%Y-%m-%d %H:%M:%S UTC",time.gmtime()))
                    +u'\n'                                                          )
-        info("comment.log loaded.")
+        info("chat.log loaded.")
 else:
     info("Logging is disabled")
 
