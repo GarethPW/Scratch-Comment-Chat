@@ -1,5 +1,5 @@
 '''
-    Scratch Comment Chat Server v1.0.2
+    Scratch Comment Chat Server v1.0.3
     Based on Scratch Comment Viewer Server v2.1.7
 
     Created by Scratch user, Gaza101.
@@ -37,12 +37,13 @@ def custom_fallback(prompt="Password: ",stream=None):
 
 getpass.fallback_getpass = custom_fallback
 
-ver = "1.0.2"
+ver = "1.0.3"
+header = ''.join([hex(ord(c) if ord(c) < 256 else 32)[2:].zfill(2) for c in "Gaza101/Scratch-Comment-Viewer/v"+ver])
 
 os.system("cls" if os.name == "nt" else "clear")
 
 print (  "Gaza101's Scratch Comment Chat Server v"+ver
-        +"\nWith thanks to Dylan5797 and DadOfMrLog\n"   )
+        +"\nWith thanks to Dylan5797 and DadOfMrLog\n" )
 
 emap = {}
 new_lc = tuple()
@@ -258,12 +259,12 @@ while True:
                         info("Encoded: "+(chatlog[-1][:30]+"..." if len(chatlog[-1]) > 30 else chatlog[-1]),v=True,f=False)
                 log.flush()
                 os.fsync(log.fileno())
-                while sum([len(i) for i in chatlog]) > 10238:
+                while sum([len(i) for i in chatlog]) > 10238-len(header):
                     del idlog[0],chatlog[0]
                 if not visual:
                     info("Sending encoded data...",v=True,f=False)
                     try:
-                        scratch.cloud.set_var("scratchchat","0x"+''.join(chatlog),project)
+                        scratch.cloud.set_var("scratchchat","0x"+header+''.join(chatlog),project)
                     except Exception:
                         info("Failed to send encoded data.",1)
                     else:
