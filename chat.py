@@ -259,12 +259,12 @@ while True:
                         info("Encoded: "+(chatlog[-1][:30]+"..." if len(chatlog[-1]) > 30 else chatlog[-1]),v=True,f=False)
                 log.flush()
                 os.fsync(log.fileno())
-                while sum([len(i) for i in chatlog]) > 10238-len(header):
+                while sum([len(i) for i in chatlog]) > 10237-len(header):
                     del idlog[0],chatlog[0]
                 if not visual:
                     info("Sending encoded data...",v=True,f=False)
                     try:
-                        scratch.cloud.set_var("scratchchat","0x"+header+''.join(chatlog),project)
+                        scratch.cloud.set_var("scratchchat","0x"+header+"00"+''.join(chatlog),project)
                     except Exception:
                         info("Failed to send encoded data.",1)
                     else:
