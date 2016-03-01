@@ -1,5 +1,5 @@
 '''
-    Scratch Comment Chat Server v1.0.3
+    Scratch Comment Chat Server v1.1.0
     Based on Scratch Comment Viewer Server v2.1.7
 
     Created by Scratch user, Gaza101.
@@ -37,7 +37,7 @@ def custom_fallback(prompt="Password: ",stream=None):
 
 getpass.fallback_getpass = custom_fallback
 
-ver = "1.0.3"
+ver = "1.1.0"
 header = ''.join([hex(ord(c) if ord(c) < 256 else 32)[2:].zfill(2) for c in "Gaza101/Scratch-Comment-Chat/v"+ver])
 
 os.system("cls" if os.name == "nt" else "clear")
@@ -58,6 +58,7 @@ default_config = ( {"login_prompt"   : "true" },
                    {"password"       : ''     },
                    {"project"        : 0      },
                    {"comment_prefix" : '#'    },
+                   {"comment_mode"   : 0      },
                    {"delay"          : 1      },
                    {"comment_timeout": 10     },
                    {"visual"         : "false"},
@@ -80,8 +81,15 @@ project: 0
 
 # Characters that a comment must begin with in order to be recognised as a chat
 # message. Use '' (with quotation marks) to make all comments a chat message.
-# This value is case sensitive.
+# Replies are checked from the beginning of their message (including initial
+# tag) therefore this should probably be set to to '' if you wish for replies
+# to be reported. This value is case sensitive.
 comment_prefix: '#'
+
+# The mode for reporting comments.
+# 0 = comments only
+# 2 = comments and replies
+comment_mode: 0
 
 # The time between each check for comments in seconds. It is recommended that
 # this is not set below 1.
@@ -137,6 +145,7 @@ try:
     password        = str(     conf.config['password']        )
     project         = int(     conf.config['project']         )
     comment_prefix  = unicode( conf.config['comment_prefix']  )
+    comment_mode    = int(     conf.config['comment_mode']    )
     delay           = float(   conf.config['delay']           )
     comment_timeout = float(   conf.config['comment_timeout'] )
     visual          = bool(    conf.config['visual']          )
@@ -166,24 +175,6 @@ if logging:
         info("chat.log loaded.")
 else:
     info("Logging is disabled")
-
-# === Emoticon Map ===
-
-info("Loading emap.txt...")
-
-try:
-    with open("emap.txt",'r') as f:
-        mi = []
-        for l in f:
-            mi = csreplace(l,"\r\n").split(" | ")
-            if len(mi) == 2:
-                emap[mi[1]] = mi[0]
-        del mi
-        f.close()
-except IOError:
-    info("Unable to load emap.txt. Continuing regardless.",1)
-else:
-    info("emap.txt loaded.")
 
 # === Authentication ===
 
@@ -220,14 +211,14 @@ else:
 
 # === Main Loop ===
 
-p = scratchcomments.CommentsParser(emap)
+p = scratchcomments.CommentsParser()
 
 info("Initialisation successful.")
 
 while True:
     while True:
         try:
-            new_lc = p.parse_project(project,to=comment_timeout)
+            new_lc = p.parse_project(project,replies=(comment_mode == 2),to=comment_timeout)
         except urllib2.HTTPError as e:
             info("HTTP error "+str(e.code)+" when obtaining comments. Does the project exist?",1,f=False)
             info("Reason: "+str(e.reason),1,v=True)
@@ -243,24 +234,33 @@ while True:
                 for i in reversed(lc):
                     if (     i['id'] not in idlog
                          and i['msg'][:len(comment_prefix)] == comment_prefix ):
-                        idlog.append(i['id'])
-                        chatlog.append(''.join(  [hex(ord(c) if ord(c) < 256 else 32)[2:].zfill(2) for c in str(i['id'])]
-                                                +["00"]
-                                                +[hex(ord(c) if ord(c) < 256 else 32)[2:].zfill(2) for c in i['user']]
-                                                +["00"]
-                                                +[hex(ord(c) if ord(c) < 256 else 32)[2:].zfill(2) for c in i['msg'][len(comment_prefix):]]
-                                                +["00"]                                                                       ))
-                        info("New comment! ID: "+str(i['id']),v=True,f=False)
+                        idlog.insert(0,i['id'])
+                        chatlog.insert(0,'')
+                        for k in ("type","id","user","msg"):
+                            for c in unicode(i[k]):
+                                if ord(c) > 255:
+                                    break
+                                else:
+                                    chatlog[0] += hex(ord(c))[2:].zfill(2)
+                            else:
+                                chatlog[0] += "00"
+                                continue
+                            break
+                        if ord(c) > 255:
+                            del idlog[0],chatlog[0]
+                            continue
+                        info("New "+i['type']+"! ID: "+str(i['id']),v=True,f=False)
                         info("Author: "+i['user'],v=True,f=False)
                         try:
                             info(u"Body: "+i['msg'][len(comment_prefix):],v=True,f=False)
                         except UnicodeEncodeError:
                             info("Unable to display comment.",1,v=True,f=False)
                         info("Encoded: "+(chatlog[-1][:30]+"..." if len(chatlog[-1]) > 30 else chatlog[-1]),v=True,f=False)
-                log.flush()
-                os.fsync(log.fileno())
+                if logging:
+                    log.flush()
+                    os.fsync(log.fileno())
                 while sum([len(i) for i in chatlog]) > 10237-len(header):
-                    del idlog[0],chatlog[0]
+                    del idlog[-1],chatlog[-1]
                 if not visual:
                     info("Sending encoded data...",v=True,f=False)
                     try:
