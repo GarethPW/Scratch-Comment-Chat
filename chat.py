@@ -1,5 +1,5 @@
 '''
-    Scratch Comment Chat Server v1.1.1
+    Scratch Comment Chat Server v1.1.2
     Based on Scratch Comment Viewer Server v2.1.7
 
     Created by Scratch user, Gaza101.
@@ -32,7 +32,7 @@ def custom_fallback(prompt="Password: ",stream=None):
 
 getpass.fallback_getpass = custom_fallback
 
-ver = "1.1.1"
+ver = "1.1.2"
 header = ''.join([hex(ord(c) if ord(c) < 256 else 32)[2:].zfill(2) for c in "Gaza101/Scratch-Comment-Chat/v"+ver])
 
 os.system("cls" if os.name == "nt" else "clear")

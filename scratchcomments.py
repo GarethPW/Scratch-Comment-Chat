@@ -1,6 +1,6 @@
 '''
-    Scratch Project Comments Parser v1.2.1
-    Created for use with SCC Server v1.1.1
+    Scratch Project Comments Parser v1.2.2
+    Created for use with SCC Server v1.1.2
 
     Created by Scratch user, Gaza101.
     Licensed under GNU General Public License v3.
@@ -124,7 +124,7 @@ class CommentsParser(HTMLParser):
                     except ValueError:
                         self.out[i]['msg'] = self.out[i]['msg'][23:] #If we fail, treat it as having no tag.
                     else:
-                        self.out[i]['msg'] = self.out[i]['msg'][15:tei]+u' '+self.out[i]['msg'][tei+23:] #Otherwise, reformat to create, '@user rest_of_message'
+                        self.out[i]['msg'] = self.out[i]['msg'][14:tei]+u' '+self.out[i]['msg'][tei+23:] #Otherwise, reformat to create, '@user rest_of_message'
             self.out = tuple(self.out)
         return self.out #Output parsed data.
     def parse_project(self,project_id,max_comments=30,page=1,replies=True,to=1): #Parses any data given. Data must be complete.
