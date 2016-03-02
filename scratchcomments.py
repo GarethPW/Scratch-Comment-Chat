@@ -1,6 +1,6 @@
 '''
-    Scratch Project Comments Parser v1.2.0
-    Created for use with SCC Server v1.1.0
+    Scratch Project Comments Parser v1.2.1
+    Created for use with SCC Server v1.1.1
 
     Created by Scratch user, Gaza101.
     Licensed under GNU General Public License v3.
@@ -47,21 +47,23 @@ class CommentsParser(HTMLParser):
                                 (2,"class","info"),
                                 (3,"class","content")          ])
     def isRName(self,n): #Checks if the current nest is valid to be a reply username.
-        return self.isLegal(n,[ ("li","ul","li","div","div","div",'a'),
-                                (0,"class","top-level-reply"),
-                                (1,"class","replies"),
-                                (2,"class","reply"),
-                                (3,"class","comment"),
-                                (4,"class","info"),
-                                (5,"class","name")                      ])
+        return (     self.replies
+                 and self.isLegal(n,[ ("li","ul","li","div","div","div",'a'),
+                                      (0,"class","top-level-reply"),
+                                      (1,"class","replies"),
+                                      (2,"class","reply"),
+                                      (3,"class","comment"),
+                                      (4,"class","info"),
+                                      (5,"class","name")                      ]) )
     def isRBody(self,n): #Checks if the current nest is valid to be a reply body.
-        return self.isLegal(n,[ ("li","ul","li","div","div","div"),
-                                (0,"class","top-level-reply"),
-                                (1,"class","replies"),
-                                (2,"class","reply"),
-                                (3,"class","comment"),
-                                (4,"class","info"),
-                                (5,"class","content")               ])
+        return (     self.replies
+                 and self.isLegal(n,[ ("li","ul","li","div","div","div"),
+                                      (0,"class","top-level-reply"),
+                                      (1,"class","replies"),
+                                      (2,"class","reply"),
+                                      (3,"class","comment"),
+                                      (4,"class","info"),
+                                      (5,"class","content")               ]) )
     def handle_starttag(self, tag, attrs):
         il = (self.isCName(self.nest),self.isCBody(self.nest),self.isRName(self.nest),self.isRBody(self.nest))
         self.nest.append((tag,self.aDict(attrs)))
@@ -105,6 +107,7 @@ class CommentsParser(HTMLParser):
             self.comments = data
             self.out = [] #Reinitialise the instance.
             self.nest = []
+            self.replies = replies
             self.reset() #Reset the parser.
             self.feed(self.comments) #Feed the parser the data from the comments of the project specified.
             self.comments = md5(self.comments).digest() #Set to MD5 hash to save memory and make comparison between this and future data faster

@@ -1,5 +1,5 @@
 '''
-    Scratch Comment Chat Server v1.1.0
+    Scratch Comment Chat Server v1.1.1
     Based on Scratch Comment Viewer Server v2.1.7
 
     Created by Scratch user, Gaza101.
@@ -26,18 +26,13 @@ def info(s,c=0,l=True,v=False,f=True):
             log.flush()
             os.fsync(log.fileno())
 
-def csreplace(s,o,n=''):
-    for i in o: #For every find character,
-        s = s.replace(i,n) #Replace with the new character.
-    return s
-
 def custom_fallback(prompt="Password: ",stream=None):
     info("Unable to hide password. Make sure no-one else can see your screen!",1,False)
     return getpass._raw_input(prompt)
 
 getpass.fallback_getpass = custom_fallback
 
-ver = "1.1.0"
+ver = "1.1.1"
 header = ''.join([hex(ord(c) if ord(c) < 256 else 32)[2:].zfill(2) for c in "Gaza101/Scratch-Comment-Chat/v"+ver])
 
 os.system("cls" if os.name == "nt" else "clear")
