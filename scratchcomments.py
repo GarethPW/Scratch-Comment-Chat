@@ -1,6 +1,6 @@
 '''
-    Scratch Project Comments Parser v1.2.2
-    Created for use with SCC Server v1.1.2
+    Scratch Project Comments Parser v1.2.3
+    Created for use with SCC Server v1.1.3
 
     Created by Scratch user, Gaza101.
     Licensed under GNU General Public License v3.
@@ -18,6 +18,8 @@ class CommentsParser(HTMLParser):
         self.nest = []
         self.comments = str()
         self.replies = bool()
+        self.max_comn = int()
+        self.comn = int()
     def aDict(self,a): #Converts attrs into dict format for easier parsing.
         d = {} #        e.g.    [('class', 'example'),('height', '50px')]
         for i in a: #   becomes  {'class':('example',),'height':('50px',)}
@@ -35,19 +37,22 @@ class CommentsParser(HTMLParser):
             pass
         return False
     def isCName(self,n): #Checks if the current nest is valid to be a comment username.
-        return self.isLegal(n,[ ("li","div","div","div",'a'),
+        return (     self.comn <= self.max_comn
+                 and self.isLegal(n,[ ("li","div","div","div",'a'),
                                 (0,"class","top-level-reply"),
                                 (1,"class","comment"),
                                 (2,"class","info"),
-                                (3,"class","name")             ])
+                                (3,"class","name")             ])   )
     def isCBody(self,n): #Checks if the current nest is valid to be a comment body.
-        return self.isLegal(n,[ ("li","div","div","div"),
+        return (     self.comn <= self.max_comn
+                 and self.isLegal(n,[ ("li","div","div","div"),
                                 (0,"class","top-level-reply"),
                                 (1,"class","comment"),
                                 (2,"class","info"),
-                                (3,"class","content")          ])
+                                (3,"class","content")          ]) )
     def isRName(self,n): #Checks if the current nest is valid to be a reply username.
-        return (     self.replies
+        return (     self.comn <= self.max_comn
+                 and self.replies
                  and self.isLegal(n,[ ("li","ul","li","div","div","div",'a'),
                                       (0,"class","top-level-reply"),
                                       (1,"class","replies"),
@@ -56,7 +61,8 @@ class CommentsParser(HTMLParser):
                                       (4,"class","info"),
                                       (5,"class","name")                      ]) )
     def isRBody(self,n): #Checks if the current nest is valid to be a reply body.
-        return (     self.replies
+        return (     self.comn <= self.max_comn
+                 and self.replies
                  and self.isLegal(n,[ ("li","ul","li","div","div","div"),
                                       (0,"class","top-level-reply"),
                                       (1,"class","replies"),
@@ -69,13 +75,17 @@ class CommentsParser(HTMLParser):
         self.nest.append((tag,self.aDict(attrs)))
         if il != (self.isCName(self.nest),self.isCBody(self.nest),self.isRName(self.nest),self.isRBody(self.nest)): #Check if a new comment/reply username or body has begun.
             iscn = self.isCName(self.nest)
-            if (iscn or self.isRName(self.nest)) and not (il[0] or il[2]): #If a new comment/reply name has begun,
+            if (iscn or self.isRName(self.nest)) and not (il[0] or il[2]): #If a new comment/reply name has begun and we're below the maximum,
                 if iscn: #If new comment name,
-                    self.out.append(["comment"]) #Append type to output.
+                    self.comn += 1 #Increment by 1 to keep track of how many root comments we've come across.
+                    if self.comn <= self.max_comn: #If we haven't reached the maximum,
+                        self.out.append(["comment"]) #Append type to output.
                 else: #If a new reply name,
                     self.out.append(["reply"]) #Append type.
-                self.out.append([self.nest[-4][1]['data-comment-id'][0]]) #Append comment id to output array.
-            self.out.append([]) #Append new list to output array to store name or body.
+                if self.comn <= self.max_comn:#If we haven't reached the maximum,
+                    self.out.append([self.nest[-4][1]['data-comment-id'][0]]) #Append comment id to output array.
+            if self.comn <= self.max_comn:#If we haven't reached the maximum,
+                self.out.append([]) #Append new list to output array to store name or body.
         elif tag == "img": #If the tag is valid to be an emoticon,
             if (     (self.isCBody(self.nest) or self.isRBody(self.nest))
                  and self.isLegal(self.nest,[tuple(),(-1,"class","easter-egg")]) ):
@@ -108,13 +118,15 @@ class CommentsParser(HTMLParser):
             self.out = [] #Reinitialise the instance.
             self.nest = []
             self.replies = replies
+            self.comn = int()
+            self.max_comn = max_comments
             self.reset() #Reset the parser.
             self.feed(self.comments) #Feed the parser the data from the comments of the project specified.
             self.comments = md5(self.comments).digest() #Set to MD5 hash to save memory and make comparison between this and future data faster
             self.out =  [{"type": self.out[i][0], #Convert parsed data into a more usable format. e.g. ({'type': 'comment', 'id': 54852378, 'user': u'Gaza101', 'msg': u'_waffle_'}, ...)
                             "id": int(self.out[i+1][0]),
                           "user": u''.join([m.decode("utf-8") for m in self.out[i+2]]),
-                           "msg": u''.join([m.decode("utf-8") for m in self.out[i+3]])[:-12]} for i in range(0,min(len(self.out),max_comments*4),4)]
+                           "msg": u''.join([m.decode("utf-8") for m in self.out[i+3]])[:-12]} for i in range(0,len(self.out),4)]
             for i in range(len(self.out)): #Continued conversion...
                 if self.out[i]['type'] == "comment":
                     self.out[i]['msg'] = self.out[i]['msg'][23:] #If regular comment, remove first 23 characters of body.
