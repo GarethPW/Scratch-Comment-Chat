@@ -112,7 +112,7 @@ class CommentsParser(HTMLParser):
     def handle_charref(self,name):
         if any((self.isCName(self.nest),self.isCBody(self.nest),self.isRName(self.nest),self.isRBody(self.nest))): #If we're in valid comment/reply text,
             self.out[-1].append(unichr(int(name[1:],16) if name[0] == 'x' else int(name))) #Append text to output.
-    def parse(self,data,max_comments=30,replies=True,to=1): #Parses any data given. Data must be complete.
+    def parse(self,data,max_comments=30,replies=True): #Parses any data given. Data must be complete.
         if self.comments != md5(data).digest(): #If we haven't already parsed this,
             self.comments = data
             self.out = [] #Reinitialise the instance.
@@ -141,7 +141,7 @@ class CommentsParser(HTMLParser):
         return self.out #Output parsed data.
     def parse_project(self,project_id,max_comments=30,page=1,replies=True,to=1): #Parses any data given. Data must be complete.
         comments = urlopen("https://scratch.mit.edu/site-api/comments/project/"+str(project_id)+"/?page="+str(page),timeout=to).read()
-        return self.parse(comments,max_comments,replies,to)
+        return self.parse(comments,max_comments,replies)
     def parse_user(self,user,max_comments=30,page=1,replies=True,to=1): #Parses any data given. Data must be complete.
         comments = urlopen("https://scratch.mit.edu/site-api/comments/user/"+user+"/?page="+str(page),timeout=to).read()
-        return self.parse(comments,max_comments,replies,to)
+        return self.parse(comments,max_comments,replies)
