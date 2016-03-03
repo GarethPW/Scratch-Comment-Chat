@@ -37,7 +37,7 @@ header = ''.join([hex(ord(c) if ord(c) < 256 else 32)[2:].zfill(2) for c in "Gaz
 
 os.system("cls" if os.name == "nt" else "clear")
 
-print (  "Gaza101's Scratch Comment Chat Server v"+ver
+print (  "Gaza101's Scratch Comments Server v"+ver
         +"\nWith thanks to Dylan5797 and DadOfMrLog\n" )
 
 emap = {}
