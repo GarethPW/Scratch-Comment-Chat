@@ -1,5 +1,5 @@
 '''
-    Scratch Comment Chat Server v1.1.3
+    Scratch Comment Chat Server v1.1.4
     Based on Scratch Comment Viewer Server v2.1.7
 
     Created by Scratch user, Gaza101.
@@ -32,7 +32,7 @@ def custom_fallback(prompt="Password: ",stream=None):
 
 getpass.fallback_getpass = custom_fallback
 
-ver = "1.1.3"
+ver = "1.1.4"
 header = ''.join([hex(ord(c) if ord(c) < 256 else 32)[2:].zfill(2) for c in "Gaza101/Scratch-Comment-Chat/v"+ver])
 
 os.system("cls" if os.name == "nt" else "clear")
@@ -250,7 +250,7 @@ while True:
                             info(u"Body: "+i['msg'][len(comment_prefix):],v=True,f=False)
                         except UnicodeEncodeError:
                             info("Unable to display comment.",1,v=True,f=False)
-                        info("Encoded: "+(chatlog[-1][:30]+"..." if len(chatlog[-1]) > 30 else chatlog[-1]),v=True,f=False)
+                        info("Encoded: "+(chatlog[0][:30]+"..." if len(chatlog[-1]) > 30 else chatlog[-1]),v=True,f=False)
                 if logging:
                     log.flush()
                     os.fsync(log.fileno())
