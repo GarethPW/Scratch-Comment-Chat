@@ -1,5 +1,5 @@
 '''
-    Scratch Comment Chat Server v1.1.4
+    Scratch Comment Chat Server v1.1.5
     Based on Scratch Comment Viewer Server v2.1.7
 
     Created by Scratch user, Gaza101.
@@ -28,11 +28,15 @@ def info(s,c=0,l=True,v=False,f=True):
 
 def custom_fallback(prompt="Password: ",stream=None):
     info("Unable to hide password. Make sure no-one else can see your screen!",1,False)
-    return getpass._raw_input(prompt)
+    res = getpass._raw_input(prompt)
+    os.system("cls" if os.name == "nt" else "clear")
+    print (  "Gaza101's Scratch Comments Server v"+ver
+            +"\nWith thanks to Dylan5797 and DadOfMrLog\n" )
+    return res
 
 getpass.fallback_getpass = custom_fallback
 
-ver = "1.1.4"
+ver = "1.1.5"
 header = ''.join([hex(ord(c) if ord(c) < 256 else 32)[2:].zfill(2) for c in "Gaza101/Scratch-Comment-Chat/v"+ver])
 
 os.system("cls" if os.name == "nt" else "clear")
@@ -288,9 +292,7 @@ while True:
                 info("Unsuccessful. Sleeping for one minute.",1)
             else:
                 time.sleep(delay)
-        try:
-            if scratch.tools.verify_session():
-                break
-        except Exception:
-            pass
-        time.sleep(60)
+        else:
+            time.sleep(60)
+            continue
+        break
