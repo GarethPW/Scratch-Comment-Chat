@@ -1,5 +1,5 @@
 '''
-    Scratch Comment Chat Server v1.1.5
+    Scratch Comment Chat Server v1.2.0
     Based on Scratch Comment Viewer Server v2.1.7
 
     Created by Scratch user, Gaza101.
@@ -36,8 +36,8 @@ def custom_fallback(prompt="Password: ",stream=None):
 
 getpass.fallback_getpass = custom_fallback
 
-ver = "1.1.5"
-header = ''.join([hex(ord(c) if ord(c) < 256 else 32)[2:].zfill(2) for c in "Gaza101/Scratch-Comment-Chat/v"+ver])
+ver = "1.2.0"
+header = ''.join([hex(ord(c) if ord(c) < 256 else 32)[2:].zfill(2) for c in "Gaza101/Scratch-Comment-Chat/v"+ver])+"00"
 
 os.system("cls" if os.name == "nt" else "clear")
 
@@ -58,6 +58,8 @@ default_config = ( {"login_prompt"   : "true" },
                    {"project"        : 0      },
                    {"comment_prefix" : '#'    },
                    {"comment_mode"   : 0      },
+                   {"max_comments"   : -1     },
+                   {"max_cloud_len"  : 10240  },
                    {"delay"          : 1      },
                    {"comment_timeout": 10     },
                    {"visual"         : "false"},
@@ -82,13 +84,20 @@ project: 0
 # message. Use '' (with quotation marks) to make all comments a chat message.
 # Replies are checked from the beginning of their message (including initial
 # tag) therefore this should probably be set to to '' if you wish for replies
-# to be reported. This value is case sensitive.
+# to be fetched. This value is case sensitive.
 comment_prefix: '#'
 
-# The mode for reporting comments.
+# The mode for fetching comments.
 # 0 = comments only
 # 2 = comments and replies
 comment_mode: 0
+
+# Maximum comments that the server can send to the project. Use -1 for no limit.
+max_comments: -1
+
+# Maximum length of the scratchchat cloud variable. Setting this to above 10240
+# may prevent comment data from being sent to the project.
+max_cloud_len: 10240
 
 # The time between each check for comments in seconds. It is recommended that
 # this is not set below 1.
@@ -103,11 +112,11 @@ comment_timeout: 10
 visual: false
 
 # If logging is enabled, data such as comment detection will be recorded to the
-# comment.log file.
+# chat.log file.
 logging: true
 
 # If verbose mode is enabled, information that would normally be recorded in the
-# log alone will also be disabled in the console.
+# log alone will also be displayed in the console.
 verbose: true
 
 # Do not change this value! Seriously - it could reset your config.
@@ -145,6 +154,8 @@ try:
     project         = int(     conf.config['project']         )
     comment_prefix  = unicode( conf.config['comment_prefix']  )
     comment_mode    = int(     conf.config['comment_mode']    )
+    max_comments    = int(     conf.config['max_comments']    )
+    max_cloud_len   = int(     conf.config['max_cloud_len']   )-2-len(header)
     delay           = float(   conf.config['delay']           )
     comment_timeout = float(   conf.config['comment_timeout'] )
     visual          = bool(    conf.config['visual']          )
@@ -155,6 +166,9 @@ except ValueError:
     info("A key in config.yml has an illegal value. Please fix the value and restart the program.",2,False)
     raw_input("Press enter to exit...")
     sysexit()
+if max_comments == -1:
+    max_comments = float("inf")
+max_cloud_len -= 2+len(header)
 
 info("config.yml loaded.",l=False)
 
@@ -258,12 +272,14 @@ while True:
                 if logging:
                     log.flush()
                     os.fsync(log.fileno())
-                while sum([len(i) for i in chatlog]) > 10237-len(header):
-                    del idlog[-1],chatlog[-1]
+                while sum([len(i) for i in chatlog]) > max_cloud_len or len(chatlog) > max_comments:
+                    del chatlog[-1]
+                while len(idlog) > len(lc):
+                    del idlog[-1]
                 if not visual:
                     info("Sending encoded data...",v=True,f=False)
                     try:
-                        scratch.cloud.set_var("scratchchat","0x"+header+"00"+''.join(chatlog),project)
+                        scratch.cloud.set_var("scratchchat","0x"+header+''.join(chatlog),project)
                     except Exception:
                         info("Failed to send encoded data.",1)
                     else:
