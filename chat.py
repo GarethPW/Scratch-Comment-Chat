@@ -1,5 +1,5 @@
 '''
-    Scratch Comment Chat Server v1.2.2
+    Scratch Comment Chat Server v1.2.3
     Based on Scratch Comment Viewer Server v2.1.7
 
     Created by Scratch user, Gaza101.
@@ -36,7 +36,7 @@ def custom_fallback(prompt="Password: ",stream=None):
 
 getpass.fallback_getpass = custom_fallback
 
-ver = "1.2.2"
+ver = "1.2.3"
 header = ''.join([hex(ord(c) if ord(c) < 256 else 32)[2:].zfill(2) for c in "Gaza101/Scratch-Comment-Chat/v"+ver])+"00"
 
 os.system("cls" if os.name == "nt" else "clear")
@@ -155,7 +155,7 @@ try:
     comment_prefix  = unicode( conf.config['comment_prefix']  )
     comment_mode    = int(     conf.config['comment_mode']    )
     max_comments    = int(     conf.config['max_comments']    )
-    max_cloud_len   = int(     conf.config['max_cloud_len']   )-2-len(header)
+    max_cloud_len   = int(     conf.config['max_cloud_len']   )
     delay           = float(   conf.config['delay']           )
     comment_timeout = float(   conf.config['comment_timeout'] )
     visual          = bool(    conf.config['visual']          )
