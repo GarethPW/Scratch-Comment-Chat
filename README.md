@@ -5,4 +5,4 @@ This software is based off of the source from my Scratch Comment Viewer Server, 
 
 This software uses Dylan5797's scratchapi which can be installed through the following command.
 
-```pip install scratchapi```
+```pip install scratchapi==1.4.0```
