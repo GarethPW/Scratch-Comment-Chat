@@ -1,3 +1,5 @@
+### This repository is currently being updated to Python 3.5.
+
 # Scratch Comment Chat
 A server script written in Python 2.7.11 to power the following Scratch project: https://scratch.mit.edu/projects/98268432/
 
